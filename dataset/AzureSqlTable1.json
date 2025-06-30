@@ -1,0 +1,61 @@
+{
+	"name": "AzureSqlTable1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"TableName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "TABLENAME",
+				"type": "varchar"
+			},
+			{
+				"name": "SCHEMANAME",
+				"type": "varchar"
+			},
+			{
+				"name": "FILENAME",
+				"type": "varchar"
+			},
+			{
+				"name": "FOLDERNAME",
+				"type": "varchar"
+			},
+			{
+				"name": "INCREMENTALCOLUMN",
+				"type": "varchar"
+			},
+			{
+				"name": "LASTPROCESSEDVALUE",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().SchemaName",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}
