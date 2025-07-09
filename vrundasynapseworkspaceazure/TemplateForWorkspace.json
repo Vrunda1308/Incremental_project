@@ -410,7 +410,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/pl_project5')]",
+			"name": "[concat(parameters('workspaceName'), '/pl_project5_SCD1')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -435,8 +435,8 @@
 								"datasetParameters": {
 									"source1": {},
 									"target": {},
-									"sink1": {},
-									"sink2": {}
+									"sink2": {},
+									"sink1": {}
 								}
 							},
 							"staging": {},
@@ -871,14 +871,14 @@
 								"referenceName": "AzureSqlDatabase1",
 								"type": "LinkedServiceReference"
 							},
-							"name": "sink1"
+							"name": "sink2"
 						},
 						{
 							"linkedService": {
 								"referenceName": "AzureSqlDatabase1",
 								"type": "LinkedServiceReference"
 							},
-							"name": "sink2"
+							"name": "sink1"
 						}
 					],
 					"transformations": [
@@ -954,41 +954,6 @@
 						"split1@Update derive(SRC_UPDATEDDATE = currentTimestamp(),",
 						"          SRC_UPDATEDBY = \"DATAFLOW-UPDATED\") ~> derivedColumn2",
 						"derivedColumn2 alterRow(updateIf(1==1)) ~> alterRow1",
-						"derivedColumn1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          ID as integer,",
-						"          NAME as string,",
-						"          CITY as string,",
-						"          PHONENUMBER as long,",
-						"          CREATEDDATE as timestamp,",
-						"          UPDATEDDATE as timestamp,",
-						"          CREATEDBY as string,",
-						"          UPDATEDBY as string,",
-						"          HASHKEY as long",
-						"     ),",
-						"     format: 'table',",
-						"     store: 'sqlserver',",
-						"     schemaName: 'dbo',",
-						"     tableName: 'DIM_CUSTOMER1',",
-						"     insertable: true,",
-						"     updateable: false,",
-						"     deletable: false,",
-						"     upsertable: false,",
-						"     stagingSchemaName: '',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     mapColumn(",
-						"          ID = SRC_ID,",
-						"          NAME = SRC_NAME,",
-						"          CITY = SRC_CITY,",
-						"          PHONENUMBER = SRC_PHONENUMBER,",
-						"          CREATEDDATE = SRC_CREATEDDATE,",
-						"          UPDATEDDATE = SRC_UPDATEDDATE,",
-						"          CREATEDBY = SRC_CREATEDBY,",
-						"          UPDATEDBY = SRC_UPDATEDBY",
-						"     )) ~> sink1",
 						"alterRow1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
@@ -1025,7 +990,43 @@
 						"          HASHKEY = TGT_HASHKEY,",
 						"          UPDATEDDATE = SRC_UPDATEDDATE,",
 						"          UPDATEDBY = SRC_UPDATEDBY",
-						"     )) ~> sink2"
+						"     )) ~> sink2",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          ID as integer,",
+						"          NAME as string,",
+						"          CITY as string,",
+						"          PHONENUMBER as long,",
+						"          CREATEDDATE as timestamp,",
+						"          UPDATEDDATE as timestamp,",
+						"          CREATEDBY as string,",
+						"          UPDATEDBY as string,",
+						"          HASHKEY as long",
+						"     ),",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'DIM_CUSTOMER1',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     stagingSchemaName: '',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ID = SRC_ID,",
+						"          NAME = SRC_NAME,",
+						"          CITY = SRC_CITY,",
+						"          PHONENUMBER = SRC_PHONENUMBER,",
+						"          CREATEDDATE = SRC_CREATEDDATE,",
+						"          UPDATEDDATE = SRC_UPDATEDDATE,",
+						"          CREATEDBY = SRC_CREATEDBY,",
+						"          UPDATEDBY = SRC_UPDATEDBY,",
+						"          HASHKEY = SRC_HASH",
+						"     )) ~> sink1"
 					]
 				}
 			},
