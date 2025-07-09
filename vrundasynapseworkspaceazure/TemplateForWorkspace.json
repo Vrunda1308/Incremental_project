@@ -435,7 +435,8 @@
 								"datasetParameters": {
 									"source1": {},
 									"target": {},
-									"sink1": {}
+									"sink1": {},
+									"sink2": {}
 								}
 							},
 							"staging": {},
@@ -871,6 +872,13 @@
 								"type": "LinkedServiceReference"
 							},
 							"name": "sink1"
+						},
+						{
+							"linkedService": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"name": "sink2"
 						}
 					],
 					"transformations": [
@@ -888,6 +896,12 @@
 						},
 						{
 							"name": "derivedColumn1"
+						},
+						{
+							"name": "derivedColumn2"
+						},
+						{
+							"name": "alterRow1"
 						}
 					],
 					"scriptLines": [
@@ -937,6 +951,9 @@
 						"          SRC_UPDATEDDATE = currentTimestamp(),",
 						"          SRC_CREATEDBY = \"DATAFLOW\",",
 						"          SRC_UPDATEDBY = \"DATAFLOW\") ~> derivedColumn1",
+						"split1@Update derive(SRC_UPDATEDDATE = currentTimestamp(),",
+						"          SRC_UPDATEDBY = \"DATAFLOW-UPDATED\") ~> derivedColumn2",
+						"derivedColumn2 alterRow(updateIf(1==1)) ~> alterRow1",
 						"derivedColumn1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     input(",
@@ -971,7 +988,44 @@
 						"          UPDATEDDATE = SRC_UPDATEDDATE,",
 						"          CREATEDBY = SRC_CREATEDBY,",
 						"          UPDATEDBY = SRC_UPDATEDBY",
-						"     )) ~> sink1"
+						"     )) ~> sink1",
+						"alterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          ID as integer,",
+						"          NAME as string,",
+						"          CITY as string,",
+						"          PHONENUMBER as long,",
+						"          CREATEDDATE as timestamp,",
+						"          UPDATEDDATE as timestamp,",
+						"          CREATEDBY as string,",
+						"          UPDATEDBY as string,",
+						"          HASHKEY as long",
+						"     ),",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'DIM_CUSTOMER1',",
+						"     insertable: false,",
+						"     updateable: true,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     keys:['ID'],",
+						"     stagingSchemaName: '',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ID = SRC_ID,",
+						"          NAME = SRC_NAME,",
+						"          CITY = SRC_CITY,",
+						"          PHONENUMBER = SRC_PHONENUMBER,",
+						"          CREATEDDATE = SRC_HASH,",
+						"          ID = TGT_ID,",
+						"          HASHKEY = TGT_HASHKEY,",
+						"          UPDATEDDATE = SRC_UPDATEDDATE,",
+						"          UPDATEDBY = SRC_UPDATEDBY",
+						"     )) ~> sink2"
 					]
 				}
 			},
