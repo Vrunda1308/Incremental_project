@@ -6,20 +6,51 @@
 			"sources": [
 				{
 					"linkedService": {
-						"referenceName": "AzureDataLakeStorage1",
+						"referenceName": "AzureDataLakeStorage2",
 						"type": "LinkedServiceReference"
 					},
 					"name": "source1"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "target"
 				}
 			],
-			"sinks": [],
-			"transformations": [],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "genertehashkey"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "split1"
+				},
+				{
+					"name": "derivedColumn1"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
-				"          {_col0_} as string,",
-				"          {_col1_} as string,",
-				"          {_col2_} as string,",
-				"          {_col3_} as string",
+				"          ID as short,",
+				"          NAME as string,",
+				"          CITY as string,",
+				"          PHONENUMBER as long",
 				"     ),",
 				"     useSchema: false,",
 				"     allowSchemaDrift: true,",
@@ -27,12 +58,75 @@
 				"     ignoreNoFilesFound: false,",
 				"     format: 'delimited',",
 				"     fileSystem: 'adls',",
-				"     folderPath: 'Project4/Customers',",
-				"     fileName: 'Customers.csv',",
+				"     fileName: 'DBO.STUDENTS.CSV',",
 				"     columnDelimiter: ',',",
 				"     escapeChar: '\\\\',",
 				"     quoteChar: '\\\"',",
-				"     columnNamesAsHeader: false) ~> source1"
+				"     columnNamesAsHeader: true) ~> source1",
+				"source(output(",
+				"          TGT_ID as integer,",
+				"          TGT_HASHKEY as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'query',",
+				"     store: 'sqlserver',",
+				"     query: 'SELECT ID AS TGT_ID, HASHKEY AS TGT_HASHKEY FROM DBO.DIM_CUSTOMER1',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> target",
+				"source1 select(mapColumn(",
+				"          each(match(1==1),",
+				"               concat('SRC_',$$) = $$)",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(SRC_HASH = crc32(concat(toString(SRC_ID),SRC_NAME,SRC_CITY,toString(SRC_PHONENUMBER)))) ~> genertehashkey",
+				"genertehashkey, target join(SRC_ID == TGT_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 split(isNull(TGT_ID),",
+				"     SRC_ID==TGT_ID && SRC_HASH==TGT_HASHKEY,",
+				"     disjoint: false) ~> split1@(insert, Update)",
+				"split1@insert derive(SRC_CREATEDDATE = currentTimestamp(),",
+				"          SRC_UPDATEDDATE = currentTimestamp(),",
+				"          SRC_CREATEDBY = \"DATAFLOW\",",
+				"          SRC_UPDATEDBY = \"DATAFLOW\") ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ID as integer,",
+				"          NAME as string,",
+				"          CITY as string,",
+				"          PHONENUMBER as long,",
+				"          CREATEDDATE as timestamp,",
+				"          UPDATEDDATE as timestamp,",
+				"          CREATEDBY as string,",
+				"          UPDATEDBY as string,",
+				"          HASHKEY as long",
+				"     ),",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'DIM_CUSTOMER1',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     stagingSchemaName: '',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          ID = SRC_ID,",
+				"          NAME = SRC_NAME,",
+				"          CITY = SRC_CITY,",
+				"          PHONENUMBER = SRC_PHONENUMBER,",
+				"          CREATEDDATE = SRC_CREATEDDATE,",
+				"          UPDATEDDATE = SRC_UPDATEDDATE,",
+				"          CREATEDBY = SRC_CREATEDBY,",
+				"          UPDATEDBY = SRC_UPDATEDBY",
+				"     )) ~> sink1"
 			]
 		}
 	}
